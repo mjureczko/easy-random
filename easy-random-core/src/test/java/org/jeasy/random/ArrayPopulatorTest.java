@@ -23,19 +23,18 @@
  */
 package org.jeasy.random;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.when;
-
-import java.lang.reflect.Array;
-
+import org.jeasy.random.beans.ArrayBean;
+import org.jeasy.random.beans.Person;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import org.jeasy.random.beans.ArrayBean;
-import org.jeasy.random.beans.Person;
+import java.lang.reflect.Array;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ArrayPopulatorTest {
@@ -52,12 +51,11 @@ class ArrayPopulatorTest {
 
     @BeforeEach
     void setUp() {
-        arrayPopulator = new ArrayPopulator(easyRandom);
+        arrayPopulator = new ArrayPopulator(easyRandom, new EasyRandomParameters());
     }
 
     @Test
     void getRandomArray() {
-        when(context.getParameters()).thenReturn(new EasyRandomParameters().collectionSizeRange(INT, INT));
         when(easyRandom.doPopulateBean(String.class, context)).thenReturn(STRING);
 
         String[] strings = (String[]) arrayPopulator.getRandomArray(String[].class, context);

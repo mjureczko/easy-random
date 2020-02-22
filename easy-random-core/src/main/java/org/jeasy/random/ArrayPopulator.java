@@ -23,8 +23,6 @@
  */
 package org.jeasy.random;
 
-import org.jeasy.random.randomizers.range.IntegerRangeRandomizer;
-
 import java.lang.reflect.Array;
 
 /**
@@ -32,17 +30,18 @@ import java.lang.reflect.Array;
  *
  * @author Mahmoud Ben Hassine (mahmoud.benhassine@icloud.com)
  */
-class ArrayPopulator {
+class ArrayPopulator extends SizeDrivenAbstractPopulator {
 
     private final EasyRandom easyRandom;
 
-    ArrayPopulator(final EasyRandom easyRandom) {
+    ArrayPopulator(final EasyRandom easyRandom, EasyRandomParameters parameters) {
+        super(parameters);
         this.easyRandom = easyRandom;
     }
 
     Object getRandomArray(final Class<?> fieldType, final RandomizationContext context) {
         Class<?> componentType = fieldType.getComponentType();
-        int randomSize = getRandomArraySize(context.getParameters());
+        int randomSize = getRandomSize();
         Object result = Array.newInstance(componentType, randomSize);
         for (int i = 0; i < randomSize; i++) {
             Object randomElement = easyRandom.doPopulateBean(componentType, context);
@@ -51,8 +50,4 @@ class ArrayPopulator {
         return result;
     }
 
-    private int getRandomArraySize(EasyRandomParameters parameters) {
-        EasyRandomParameters.Range<Integer> collectionSizeRange = parameters.getCollectionSizeRange();
-        return new IntegerRangeRandomizer(collectionSizeRange.getMin(), collectionSizeRange.getMax(), parameters.getSeed()).getRandomValue();
-    }
 }
