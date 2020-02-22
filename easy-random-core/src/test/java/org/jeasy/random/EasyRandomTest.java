@@ -280,7 +280,7 @@ class EasyRandomTest {
         EasyRandom easyRandom = new EasyRandom();
         for (int i = 0; i < 100; i++) {
             final SomeClass someClass = easyRandom.nextObject(SomeClass.class);
-            collectionsSizes.add(someClass.lorem.size());
+            collectionsSizes.add(someClass.list.size());
         }
 
         assertThat(collectionsSizes.size()).isGreaterThan(1);
@@ -297,8 +297,38 @@ class EasyRandomTest {
         List<Integer> secondResult = new ArrayList<>();
 
         for(int i = 0; i<100; i++) {
-            firstResult.add(first.nextObject(SomeClass.class).lorem.size());
-            secondResult.add(second.nextObject(SomeClass.class).lorem.size());
+            firstResult.add(first.nextObject(SomeClass.class).list.size());
+            secondResult.add(second.nextObject(SomeClass.class).list.size());
+        }
+
+        assertThat(firstResult).isEqualTo(secondResult);
+    }
+
+    @Test
+    void generateArraysOfDifferentSize_whenReusingEasyRandomInstance() {
+        Set<Integer> collectionsSizes = new HashSet<>();
+        EasyRandom easyRandom = new EasyRandom();
+        for (int i = 0; i < 100; i++) {
+            final SomeClass someClass = easyRandom.nextObject(SomeClass.class);
+            collectionsSizes.add(someClass.array.length);
+        }
+
+        assertThat(collectionsSizes.size()).isGreaterThan(1);
+    }
+
+    @Test
+    void arraySizesAreRepeatable_whenFixedSeedIsUsed() {
+        long seed = new Random().nextInt();
+        EasyRandomParameters parameters = new EasyRandomParameters();
+        parameters.seed(seed);
+        EasyRandom first = new EasyRandom(parameters);
+        EasyRandom second = new EasyRandom(parameters);
+        List<Integer> firstResult = new ArrayList<>();
+        List<Integer> secondResult = new ArrayList<>();
+
+        for(int i = 0; i<100; i++) {
+            firstResult.add(first.nextObject(SomeClass.class).array.length);
+            secondResult.add(second.nextObject(SomeClass.class).array.length);
         }
 
         assertThat(firstResult).isEqualTo(secondResult);
@@ -308,5 +338,6 @@ class EasyRandomTest {
 class SomeClass {
     int number;
     String text;
-    List<String> lorem;
+    List<String> list;
+    String[] array;
 }
