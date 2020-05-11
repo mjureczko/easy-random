@@ -27,6 +27,7 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.jeasy.random.FieldPredicates.named;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.Mockito.when;
 
 import java.lang.annotation.Documented;
@@ -54,6 +55,8 @@ public class RandomizationContextTest {
     private EasyRandomParameters parameters;
 
     private RandomizationContext randomizationContext;
+
+    private EasyRandom easyRandom = new EasyRandom();
 
     @BeforeEach
     void setUp() {
@@ -185,6 +188,47 @@ public class RandomizationContextTest {
         assertThat(a.b.c.d).isNotNull();
         assertThat(a.b.c.d.name).isEqualTo("foo");
         assertThat(a.b.e.name).isEqualTo("bar");
+    }
+
+    @Test
+    public void returnFromPoolUnusedBeans() {
+        //given
+        A unusedBean = easyRandom.nextObject(A.class);
+        avoidInfiniteRecursionFixture(easyRandom.nextObject(A.class), unusedBean);
+
+        for (int i = 0; i < 42; i++) {
+            //when
+            Object actual = randomizationContext.getPopulatedBean(A.class);
+
+            //then
+            assertSame(actual, unusedBean);
+        }
+    }
+
+    @Test
+    public void returnFromPoolUnusedBeansRespectingStackContent() {
+        //given
+        A usedBean = easyRandom.nextObject(A.class);
+        A unusedBean = easyRandom.nextObject(A.class);
+        randomizationContext.pushStackItem(new RandomizationContextStackItem(usedBean, null));
+        avoidInfiniteRecursionFixture(usedBean, unusedBean);
+
+        for (int i = 0; i < 42; i++) {
+            //when
+            Object actual = randomizationContext.getPopulatedBean(A.class);
+
+            //then
+            assertSame(actual, unusedBean);
+        }
+    }
+
+    private void avoidInfiniteRecursionFixture(A usedBean, A unusedBean) {
+        Class<A> type = A.class;
+        when(parameters.getObjectPoolSize()).thenReturn(EasyRandomParameters.DEFAULT_OBJECT_POOL_SIZE);
+        when(parameters.isAvoidInfiniteRecursion()).thenReturn(true);
+        randomizationContext.addPopulatedBean(type, usedBean);
+        randomizationContext.registerBeanUsage(type, usedBean);
+        randomizationContext.addPopulatedBean(type, unusedBean);
     }
 
     static class MyRandomizer implements ContextAwareRandomizer<D> {

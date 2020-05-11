@@ -37,6 +37,8 @@ import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.sql.Timestamp.valueOf;
@@ -369,5 +371,31 @@ class EasyRandomTest {
                 .allMatch(it -> it.collection == null || it.collection.size() >= minSize && it.collection.size() < maxSize, "Collections should respect requested sizes")
                 .allMatch(it -> it.array == null || it.array.length >= minSize && it.array.length < maxSize, "Arrays should respect requested sizes")
                 .allMatch(it -> it.map == null || it.map.size() >= minSize && it.map.size() < maxSize, "Maps should respect requested sizes");
+    }
+
+    @Test
+    void avoidInfiniteLoopsInRecursiveObjects() {
+        //given
+        EasyRandomParameters parameters = new EasyRandomParameters();
+        int randomizationDepth = 9;
+        parameters.randomizationDepth(randomizationDepth);
+        parameters.objectPoolSize(10);
+        parameters.collectionSizeRange(20,50);
+        parameters.setAvoidInfiniteRecursion(true);
+        EasyRandom easyRandom = new EasyRandom(parameters);
+
+        //when
+        RecursiveObject actual = easyRandom.nextObject(RecursiveObject.class);
+
+        //then
+        assertThat(actual).isNotNull();
+        Set<RecursiveObject> collections = new HashSet<>();
+        boolean added = collections.add(actual);
+        RecursiveObject ro = actual;
+        while(!ro.collection.isEmpty() && added) {
+            ro = ro.collection.get(1);
+            added = collections.add(ro);
+        }
+        assertThat(added).isTrue();
     }
 }

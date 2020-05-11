@@ -24,6 +24,8 @@
 package org.jeasy.random;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Context object holding the data of a recursion step in {@link EasyRandom#nextObject(Class)}.
@@ -35,6 +37,8 @@ class RandomizationContextStackItem {
     private Object object;
 
     private Field field;
+
+    private final Map<Class<?>, Object> usedBeans = new HashMap<>();
 
     RandomizationContextStackItem(final Object object, final Field field) {
         this.object = object;
@@ -55,5 +59,13 @@ class RandomizationContextStackItem {
 
     public void setField(Field field) {
         this.field = field;
+    }
+
+    public void registerBeanUsage(Class type, Object bean) {
+        usedBeans.put(type, bean);
+    }
+
+    public Object getUsedBean(Class type) {
+        return usedBeans.get(type);
     }
 }

@@ -99,6 +99,7 @@ public class EasyRandomParameters {
     private boolean ignoreRandomizationErrors;
     private boolean bypassSetters;
     private boolean avoidNullsOnDeepestRecursionLevel;
+    private boolean avoidInfiniteRecursion;
     private Range<Integer> collectionSizeRange;
     private Range<Integer> stringLengthRange;
     private Range<LocalDate> dateRange;
@@ -125,6 +126,7 @@ public class EasyRandomParameters {
         ignoreRandomizationErrors = false;
         bypassSetters = false;
         avoidNullsOnDeepestRecursionLevel = true;
+        avoidInfiniteRecursion = false;
         objectPoolSize = DEFAULT_OBJECT_POOL_SIZE;
         randomizationDepth = DEFAULT_RANDOMIZATION_DEPTH;
         dateRange = new Range<>(DEFAULT_DATES_RANGE.getMin().toLocalDate(), DEFAULT_DATES_RANGE.getMax().toLocalDate());
@@ -238,6 +240,14 @@ public class EasyRandomParameters {
 
     public void setAvoidNullsOnDeepestRecursionLevel(boolean avoidNullsOnDeepestRecursionLevel) {
         this.avoidNullsOnDeepestRecursionLevel = avoidNullsOnDeepestRecursionLevel;
+    }
+
+    public boolean isAvoidInfiniteRecursion() {
+        return avoidInfiniteRecursion;
+    }
+
+    public void setAvoidInfiniteRecursion(boolean avoidInfiniteRecursion) {
+        this.avoidInfiniteRecursion = avoidInfiniteRecursion;
     }
 
     public ExclusionPolicy getExclusionPolicy() {
@@ -578,6 +588,11 @@ public class EasyRandomParameters {
      */
     public EasyRandomParameters avoidNullsOnDeepestRecursionLevel(boolean avoidNullsOnDeepestRecursionLevel) {
         setAvoidNullsOnDeepestRecursionLevel(avoidNullsOnDeepestRecursionLevel);
+        return this;
+    }
+
+    public EasyRandomParameters avoidInfiniteRecursion(boolean avoidInfiniteRecursion) {
+        setAvoidInfiniteRecursion(avoidInfiniteRecursion);
         return this;
     }
 

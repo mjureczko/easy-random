@@ -132,17 +132,22 @@ public class EasyRandom extends Random {
 
             // Collection types are randomized without introspection for internal fields
             if (!isIntrospectable(type)) {
-                return randomize(type, context);
+                T bean = randomize(type, context);
+                context.registerBeanUsage(bean.getClass(), bean);
+                return bean;
             }
 
             // If the type has been already randomized, return one cached instance to avoid recursion.
             if (context.hasAlreadyRandomizedType(type)) {
-                return (T) context.getPopulatedBean(type);
+                T bean = (T) context.getPopulatedBean(type);
+                context.registerBeanUsage(bean.getClass(), bean);
+                return bean;
             }
 
             // create a new instance of the target type
             result = objectFactory.createInstance(type, context);
             context.setRandomizedObject(result);
+            context.registerBeanUsage(result.getClass(), result);
 
             // cache instance in the population context
             context.addPopulatedBean(type, result);

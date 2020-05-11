@@ -27,6 +27,8 @@ import org.jeasy.random.api.RandomizerContext;
 
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
@@ -47,6 +49,8 @@ class RandomizationContext implements RandomizerContext {
     private final Class<?> type;
 
     private Object rootObject;
+
+    private final Map<Class<?>, Object> usedBeans = new HashMap<>();
 
     RandomizationContext(final Class<?> type, final EasyRandomParameters parameters) {
         this.type = type;
@@ -70,7 +74,17 @@ class RandomizationContext implements RandomizerContext {
     Object getPopulatedBean(final Class<?> type) {
         int actualPoolSize = populatedBeans.get(type).size();
         int randomIndex = actualPoolSize > 1 ? nextInt(0, actualPoolSize) : 0;
-        return populatedBeans.get(type).get(randomIndex);
+        Object result = populatedBeans.get(type).get(randomIndex);
+        if (parameters.isAvoidInfiniteRecursion()) {
+            HashSet<Object> alreadyUsedBeans = getAlreadyUsedBeansOfType(type);
+            if (alreadyUsedBeans.size() < actualPoolSize) {
+                do {
+                    result = populatedBeans.get(type).get(randomIndex);
+                    randomIndex = (randomIndex + 1) % actualPoolSize;
+                } while (alreadyUsedBeans.contains(result));
+            }
+        }
+        return result;
     }
 
     boolean hasAlreadyRandomizedType(final Class<?> type) {
@@ -101,6 +115,13 @@ class RandomizationContext implements RandomizerContext {
         return parameters.isAvoidNullsOnDeepestRecursionLevel() && currentRandomizationDepth == parameters.getRandomizationDepth();
     }
 
+    private HashSet<Object> getAlreadyUsedBeansOfType(Class<?> type) {
+        return Stream.concat(
+                stack.stream().map(it -> it.getUsedBean(type)),
+                usedBeans.get(type) == null ? Stream.empty() : Stream.of(usedBeans.get(type))
+        ).collect(Collectors.toCollection(HashSet::new));
+    }
+
     private List<String> getStackedFieldNames() {
         return stack.stream().map(i -> i.getField().getName()).collect(toList());
     }
@@ -128,8 +149,7 @@ class RandomizationContext implements RandomizerContext {
     public Object getCurrentObject() {
         if (stack.empty()) {
             return rootObject;
-        }
-        else {
+        } else {
             return stack.lastElement().getObject();
         }
     }
@@ -152,5 +172,15 @@ class RandomizationContext implements RandomizerContext {
     @Override
     public EasyRandomParameters getParameters() {
         return parameters;
+    }
+
+    public void registerBeanUsage(Class type, Object bean) {
+        if (parameters.isAvoidInfiniteRecursion()) {
+            if (stack.size() == 0) {
+                usedBeans.put(type, bean);
+            } else {
+                stack.peek().registerBeanUsage(type, bean);
+            }
+        }
     }
 }
